@@ -1,0 +1,19 @@
+KSE QUANTUM - WEB DEPLOYMENT (Yahoo-primary build)
+====================================================
+
+Files in this folder (use EXACTLY these, delete everything else from your repo):
+
+  app.py               - the application (web mode is automatic)
+  kse_universe.json    - symbol universe (REQUIRED, must sit next to app.py)
+  requirements.txt     - dependencies
+  README.md            - project readme
+
+IMPORTANT:
+1. Your repo must contain ONLY these 4 files at the ROOT (no subfolders).
+2. Set environment variable on Streamlit Cloud:
+      App -> Manage app -> Settings -> Environment variables:
+      KSE_WEB_PUBLIC = 1
+   (With this set, the app uses Yahoo Finance only - no PSX calls.)
+3. First load takes ~15-25s to build the market board (one-time, then cached).
+4. Data freshness: Yahoo EOD, delayed up to ~1-2 trading days. This is
+   disclosed in the disclaimer at the bottom of every page.
