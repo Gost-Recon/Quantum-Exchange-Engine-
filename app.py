@@ -25,6 +25,7 @@ Double-checking mechanisms (see run_integrity_checks):
 
 import json
 import os
+import socket
 import re
 import io
 import time
@@ -69,7 +70,20 @@ HEADERS = {
 
 # WEB_PUBLIC: True for web-deployed builds (Streamlit Cloud, HF, Render) —
 # Yahoo-only data path; PSX-direct endpoints are compiled out of the web path.
-WEB_PUBLIC = True if os.environ.get("KSE_WEB_PUBLIC", "0") == "1" else False
+# Auto-detects Streamlit Cloud: env var takes precedence; cloud container
+# fallback (hostname suffix or upstream streamlit headers) as second signal.
+def _detect_web_public():
+    if os.environ.get("KSE_WEB_PUBLIC", "0") == "1":
+        return True
+    host = ""
+    try:
+        host = socket.gethostname().lower()
+    except Exception:
+        pass
+    return host.endswith(".streamlit.localhost") or ".streamlit.app" in host or \
+           "streamlit" in os.environ.get("HOSTNAME", "").lower()
+
+WEB_PUBLIC = _detect_web_public()
 PKT = ZoneInfo("Asia/Karachi")
 
 # Optional private relay (most-independent fix): set KSE_PROXY env var to a
@@ -1363,6 +1377,9 @@ _MW_STATE = {"mw": None, "err": None, "done": False}
 
 def shared_market_watch():
     """Lazily fetch market watch once per session; returns df or None."""
+    if WEB_PUBLIC:
+        mw = market_watch_yahoo()
+        return mw if len(mw) else None
     if not _MW_STATE["done"]:
         try:
             _MW_STATE["mw"] = get_market_watch()
